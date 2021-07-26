@@ -33,9 +33,9 @@
           <mat-card-content>
             <div class="flex-row">
               <div class="temp">
-                <span>17 C</span>
+                <span>{{currentWeather.main?.temp}} C</span>
                 <span>Feels like </span>
-                <span>12 C</span>
+                <span>{{currentWeather.main?.feels_like}} C</span>
               </div>
               <div class="outlook">
                 <div *ngFor="let weather of currentWeather.weather">
@@ -47,8 +47,25 @@
             </div>
           </mat-card-content>
         </mat-card>
-    </div>
+      </div>
 
+    </div>
+    
+    <div class="mt-5">
+      <h5>Forecast Weather</h5>
+      <hr>
+      <div *ngFor="let weather of items">
+        {{weather.current.dt}}
+      </div>
+      <div *ngIf="errorForecastWeather">
+        Sorry, i think i can't request  date future
+        because i use free account of https://openweathermap.org API :)
+        <br>
+        this result errors :
+        <br>
+        {{errorForecastWeather}}
+      </div>
+    </div>
 
   </div>
 </div>

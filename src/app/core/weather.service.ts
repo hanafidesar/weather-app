@@ -14,7 +14,7 @@ export class WeatherService {
   apiWeather = AppApi.API_WHEATHER;
   
   getCurrentWeather(params) {
-    return this._http.get(this.apiWeather + 'weather?lat=' + params.lat + '&lon=' + params.lon + '&appid=' + this.apiKey )
+    return this._http.get(this.apiWeather + 'weather?lat=' + params.lat + '&lon=' + params.lon + '&units=metric' + '&appid=' + this.apiKey )
   }
 
   getForecastNextDayWeather(params) {

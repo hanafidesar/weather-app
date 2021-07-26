@@ -1,10 +1,8 @@
-
 import { MapsAPILoader } from '@agm/core';
 import { Component, ElementRef, ViewChild, NgZone } from '@angular/core';
 
 // services
 import { WeatherService } from './core/weather.service'
-
 
 @Component({
   selector: 'app-root',
@@ -20,9 +18,12 @@ export class AppComponent {
   longitude: number = 0
   zoom: number = 0
   address: string = ''
+  items: any;
 
   currentWeather: any = {};
-  icon: string = '';
+  forecastWeather: any = {};
+  errorForecastWeather:any;
+
   private geoCoder;
   @ViewChild('search')
   public searchElementRef: ElementRef;
@@ -33,21 +34,25 @@ export class AppComponent {
     private ngZone: NgZone
   ) {}
 	
-  // getDates(start, end) {
-  //   for(var arr=[] as any,dt=new Date(start); dt<=end; dt.setDate(dt.getDate()+1)){
-      
-  //     arr.push(new Date(dt).getTime() / 1000);
-  //   }
-  //   return arr;
-  // };
+  // set variable start date and stop date and range amount days
+  initDates() {
+    let startDate = new Date();
+    var stopDate = new Date();
+    stopDate.setDate(stopDate.getDate() + 3);
+    let days = this.getDates(startDate, stopDate)
+    return days
+  }
 
-  // addDays(date, days) {
-  //   date.setDate(date.getDate() + days);
-  //   return date;
-  // }
+  // set range days by start date and stop date
+  getDates(start, end) {
+    for(var arr=[] as any,dt=new Date(start); dt<=end; dt.setDate(dt.getDate()+1)){
+      let w = new Date(dt)
+      arr.push(Math.floor(w.getTime() / 1000))
+    }
+    return arr;
+  };
 
   ngOnInit() {
-    
     // load map
     this._mapsAPILoader.load().then(() => {
       this.setCurrentLocation();
@@ -70,10 +75,6 @@ export class AppComponent {
           this.longitude = place.geometry.location.lng();
           this.zoom = 12;
 
-          let params = {"lat": this.latitude, "lon": this.longitude,"dt":"1627151442"}
-          
-          // this.getForecastNextDayWeather(params)
-		      this.getCurrentWeather(params)
           this.getAddress(this.latitude, this.longitude);
 
         });
@@ -81,6 +82,7 @@ export class AppComponent {
     });
   }
 
+  // get current location from API googlemap
   private setCurrentLocation() {
     if ('geolocation' in navigator) {
       navigator.geolocation.getCurrentPosition((position) => {
@@ -92,6 +94,7 @@ export class AppComponent {
     }
   }
 
+  // get address from API googlemap
   getAddress(latitude, longitude) {
     this.geoCoder.geocode({ 'location': { lat: latitude, lng: longitude } }, (results, status) => {
       if (status === 'OK') {
@@ -101,12 +104,9 @@ export class AppComponent {
           let params = {"lat": latitude, "lon": longitude,"dt":"1627151442"}
           
 		      this.getCurrentWeather(params)
-          
-          // let startDate = new Date();
-          // var stopDate = new Date();
-          // stopDate.setDate(stopDate.getDate() + 7);
-          // let days = this.getDates(startDate, stopDate)
-          // this.getRangeDays(days, params)
+          let days = this.initDates()
+          this.getForecastNextDayWeather(days,latitude,longitude)
+
         } else {
           window.alert('No results found');
         }
@@ -117,25 +117,24 @@ export class AppComponent {
     });
   }
 
-  // getRangeDays(days, params) {
-  //   let array = [] as any;
-  //   for (var char of days) {
-  //     this.getForecastNextDayWeather(params)
-  //   }
-  // }
-
+  // get current location from https://openweathermap.org by observable services
 	getCurrentWeather(params){
 		this._weatherService.getCurrentWeather(params).subscribe((data) =>{
       this.currentWeather = JSON.parse(JSON.stringify(data))
-      // debugger
-      this.icon = "http://openweathermap.org/img/wn/" + this.currentWeather.weather[0].icon + "@2x.png"
     })
 	}
 
-  // getForecastNextDayWeather(params) {
-	// 	this._weatherService.getForecastNextDayWeather(params).subscribe(function(data){
-  //     let x = data
-  //     // debugger
-  //   })
-  // }
+  // get forecast location from https://openweathermap.org by observable services
+  getForecastNextDayWeather(days,latitude,longitude) {
+    this.items = []
+    for (var val of days){
+      let params = {"lat": latitude, "lon": longitude,"dt":val}
+      this._weatherService.getForecastNextDayWeather(params).subscribe((item) =>{
+        this.forecastWeather = JSON.parse(JSON.stringify(item))
+        this.items.push(this.forecastWeather);
+      }, (error) => {
+        this.errorForecastWeather = error.error.message
+      })
+    }
+  }
 }
